@@ -169,3 +169,6 @@ function custom_login_logo() {
     <?php
 }
 add_action('login_head', 'custom_login_logo');
+
+
+add_action('admin_footer_text', function() { echo "Inspry 2"; });
