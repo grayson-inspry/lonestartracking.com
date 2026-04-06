@@ -186,5 +186,4 @@ function inspry_add_acf_body_class( $classes ) {
     return $classes;
 }
 
-add_action('admin_footer_text', function() { echo 'Inspry'; });
 
