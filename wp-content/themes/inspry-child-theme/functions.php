@@ -1,78 +1,86 @@
 <?php
 /**
- * Astra Child Theme functions and definitions
- *
- * @link https://developer.wordpress.org/themes/basics/theme-functions/
- *
- * @package Astra Child
- * @since 1.0.0
+ * Setup Child Theme Styles
  */
+function inspry_child_theme_enqueue_styles() {
+	wp_enqueue_style( 'inspry_child_theme-style', get_stylesheet_directory_uri() . '/style.css', false, '1.0' );
+}
+add_action( 'wp_enqueue_scripts', 'inspry_child_theme_enqueue_styles', 20 );
 
 /**
- * Define Constants
+ * Setup Child Theme Defaults
+ *
+ * @param array $defaults registered option defaults with kadence theme.
+ * @return array
  */
-define( 'CHILD_THEME_ASTRA_CHILD_VERSION', '1.0.0' );
+function inspry_child_theme_change_option_defaults( $defaults ) {
+	$new_defaults = '{"custom_logo":29293}';
+	$new_defaults = json_decode( $new_defaults, true );
+	return wp_parse_args( $new_defaults, $defaults );
+}
+add_filter( 'kadence_theme_options_defaults', 'inspry_child_theme_change_option_defaults', 20 );
 
+/**
+ * Enable the Block Editor (Gutenberg) for WooCommerce Products
+ */
+add_filter( 'use_block_editor_for_post_type', 'enable_gutenberg_for_products', 10, 2 );
+function enable_gutenberg_for_products( $can_edit, $post_type ) {
+    if ( $post_type === 'product' ) {
+        return true;
+    }
+    return $can_edit;
+}
 
+/**
+ * Enable REST API for Products (Required for Gutenberg to load)
+ */
+add_filter( 'woocommerce_register_post_type_product', 'enable_products_rest_api' );
+function enable_products_rest_api( $args ) {
+    $args['show_in_rest'] = true;
+    return $args;
+}
 
-// This simply says "nobody has the authority to resubscribe a subscription ever"
+/**
+ * Code moved from old child theme below
+ */
+/**
+ * Cannot re-subscribe to exisiting subscriptions
+ */
 add_filter( 'wcs_can_user_resubscribe_to_subscription', '__return_false' );
 
-/** Disable Ajax Call from WooCommerce */
-add_action( 'wp_enqueue_scripts', 'dequeue_woocommerce_cart_fragments', 11 );
-function dequeue_woocommerce_cart_fragments() {
-	if ( is_front_page() ) {
-		wp_dequeue_script( 'wc-cart-fragments' );
-	} }
-
-
-// ** *Enable upload for webp image files.*/
+/**
+ * Enable webp image support
+ */
 function webp_upload_mimes( $existing_mimes ) {
 	$existing_mimes['webp'] = 'image/webp';
 	return $existing_mimes;
 }
 add_filter( 'mime_types', 'webp_upload_mimes' );
 
-// ** Remove total revenue from Store Manager
-
-function remove_dashboard_widgets() {
-	if ( current_user_can( 'shop_manager' ) ) {
-		// remove WooCommerce Dashboard Status
-		remove_meta_box( 'woocommerce_dashboard_status', 'dashboard', 'normal' );
-	}
-}
-add_action( 'wp_user_dashboard_setup', 'remove_dashboard_widgets', 20 );
-add_action( 'wp_dashboard_setup', 'remove_dashboard_widgets', 20 );
-
-/*
-* Remove WooCommerce reports for shop manager
-* Remove analytics for shop manager
-*/
-
-function backorder_text( $availability ) {
-
-	foreach ( $availability as $i ) {
-
-		$availability = str_replace( 'Available on backorder', 'Out of Stock - Backordered', $availability );
-		$availability = str_replace( 'In stock (can be backordered)', 'In Stock', $availability );
-		$availability = str_replace( 'This product is currently out of stock and unavailable', 'Call for availability', $availability );
-	}
-
-	return $availability;
-}
-add_filter( 'woocommerce_get_availability', 'backorder_text' );
-
-
-
-
-/*Auto Complete all WooCommerce Renewal Subscription orders.*/
+/**
+ * Auto complete all WooCommerce renewal subscription orders
+ */
 add_action( 'woocommerce_subscription_renewal_payment_complete', 'subscription_renewal_payment_complete_callback', 10, 2 );
 function subscription_renewal_payment_complete_callback( $subscription, $last_order ) {
 	$last_order->update_status( 'completed' );
 }
 
+/**
+ * Change text for backorder products
+ */
+function backorder_text( $availability ) {
+	foreach ( $availability as $i ) {
+		$availability = str_replace( 'Available on backorder', 'Out of Stock - Backordered', $availability );
+		$availability = str_replace( 'In stock (can be backordered)', 'In Stock', $availability );
+		$availability = str_replace( 'This product is currently out of stock and unavailable', 'Call for availability', $availability );
+	}
+	return $availability;
+}
+add_filter( 'woocommerce_get_availability', 'backorder_text' );
 
-/*Change text on product page */
+/**
+ * Change "sign up fee" to "hardware fee"
+ */
 function change_subscription_product_string( $subscription_string, $product, $include ) {
 	if ( $include['sign_up_fee'] ) {
 		$subscription_string = str_replace( 'sign-up fee', 'hardware fee', $subscription_string );
@@ -81,16 +89,15 @@ function change_subscription_product_string( $subscription_string, $product, $in
 }
 add_filter( 'woocommerce_subscriptions_product_price_string', 'change_subscription_product_string', 10, 3 );
 
-
-
+/**
+ * Change billing phone field label and mask
+ */
 add_filter( 'woocommerce_checkout_fields', 'custom_override_checkout_fields' );
 function custom_override_checkout_fields( $fields ) {
 	$fields['billing']['billing_phone']['label']             = 'Phone (5555551212)'; // replace 'Your new label' with the actual label you want
 	$fields['billing']['billing_phone']['custom_attributes'] = array( 'pattern' => '\d{9}' );
 	return $fields;
 }
-
-
 
 /**
  * Ear Tag Accept Checkbox
@@ -105,17 +112,17 @@ function subscription_checkbox_shortcode() {
 
 		// Check if current product is the specific product
 		if ( $current_product_id == $target_product_id ) {
-			$subscription_terms_link = esc_url( get_option( 'subscription_terms_link', '/wp-content/themes/astra-child/eartag.html' ) );
+			$subscription_terms_link = esc_url( get_option( 'subscription_terms_link', '/wp-content/themes/inspry-child-theme/eartag.html' ) );
 			ob_start();
 			?>
 			<div class="subscription-checkbox">
-				<label style="font-family: 'Gilroy Light';">
+				<label>
 					<input type="checkbox" id="terms_accepted" name="terms_accepted" required>
 					I understand the <a style="text-decoration:underline;text-underline-position: under;" href="#" onclick="openTermsPopup();return false;">Return Policy of the Satellite Ear Tag.</a><abbr class="required" title="required">*</abbr>
 				</label>
 			</div>
 			<div id="termsPopup" style="display:none; position:fixed; top:20%; left:25%; width:50%; height:60%; background-color:white; border: 2px solid #000; z-index:100; overflow:auto;">
-				<span style="position:absolute; top:0px; right:10px; cursor:pointer;" onclick="closeTermsPopup();">&times;</span>
+				<span style="font-size: 48px; position:absolute; top:0px; right:10px; cursor:pointer;" onclick="closeTermsPopup();">&times;</span>
 				<iframe src="<?php echo $subscription_terms_link; ?>" style="width:100%; height:100%;"></iframe>
 			</div>
 			<script>
@@ -156,16 +163,27 @@ function subscription_checkbox_shortcode() {
 add_shortcode( 'subscription_checkbox', 'subscription_checkbox_shortcode' );
 
 
-function custom_login_logo() {
-    ?>
-    <style type="text/css">
-        .login h1 a {
-            background-image: url('https://www.lonestartracking.com/wp-content/uploads/2018/05/LoneStar-Tracking-R.png');
-            background-size: contain;
-            width: 100%;
-            height: 80px;
+/**
+ * Add custom class to the <body> tag based on ACF Checkbox
+ */
+add_filter( 'body_class', 'inspry_add_acf_body_class' );
+function inspry_add_acf_body_class( $classes ) {
+
+    // 1. Check if we are on a single page/post
+    if ( is_singular() ) {
+        
+        // 2. Get the value of your ACF field (Key: gradient_background)
+        // Note: ACF True/False fields usually return 1 (true) or 0 (false)
+        $has_gradient = get_field( 'gradient_background' );
+
+        // 3. If the checkbox is checked, add our class to the array
+        if ( $has_gradient ) {
+            $classes[] = 'gradient-background';
         }
-    </style>
-    <?php
+    }
+
+    // 4. Return the updated list of classes to WordPress
+    return $classes;
 }
-add_action('login_head', 'custom_login_logo');
+
+

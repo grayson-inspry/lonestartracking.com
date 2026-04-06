@@ -1,0 +1,33 @@
+/*
+Theme Name:     Inspry Child Theme
+Theme URI:      n/a
+Template:       kadence
+Author:         Inspry
+Author URI:     n/a
+Description:    Kadence Child
+Version:        1.0
+License:        GNU General Public License v3.0 (or later)
+License URI:    https://www.gnu.org/licenses/gpl-3.0.html
+*/
+
+.elementor-7933 .elementor-element.elementor-element-59cf218 .elementor-jet-single-add-to-cart .cart .quantity {
+display: inline-flex;
+}
+
+/* Products IN STOCK */
+.woocommerce div.product p.stock {
+    color: green;
+}
+
+/* Products ON BACKORDER */
+.woocommerce div.product .stock.available-on-backorder {
+    color: red;
+}
+
+/* Products OUT OF STOCK */
+.woocommerce div.product p.stock.out-of-stock {
+    color: red;
+
+}
+
+
